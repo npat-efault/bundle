@@ -1,3 +1,5 @@
+// Constants and strings used by mkbundle
+
 package main
 
 const usage = ` 
@@ -13,11 +15,10 @@ The <file-or-dir> argument is the name (path) of the file you wish to
 embed. If a directory name is given instead, all files in that
 directory (and its subridectories, recursivelly) will be embedded.
 
-If a directory (<dir>) is given as argument, and the output file
-(specified by the "-out" flag) already exists, the output file will be
-re-generated only if <dir>, or at least one of the files and
-sub-directories in <dir>, are younger than the output file. You can
-override this behavior using the "-always" flag.
+If the output file (specified by the "-out" flag) already exists, it
+will be re-generated only if <file-or-dir>, or at least one of the
+files and sub-directories in it, are younger than the output file. You
+can override this behavior using the "-always" flag.
 
 The following flags are recognized:
 
@@ -53,4 +54,4 @@ const FileHeadFormat string = `{ Name : "%[1]s",
   Gzip : %[3]v,
   Data : ` + "`"
 
-const FileFootFormat string = "\n`}\n"
+const FileFootFormat string = "\n`},\n"
