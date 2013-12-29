@@ -59,7 +59,7 @@ const BundleFootFormat string = `}
 
 var %[2]s bundle.Index
 
-func Init() {
+func init() {
      %[2]s = bundle.MkIndex(%[1]s)
 }
 
