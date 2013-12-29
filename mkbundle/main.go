@@ -144,7 +144,7 @@ func isYounger(ofn string, ifn string) bool {
 		return false
 	}
 	oinf, err = os.Stat(ofn)
-	if err != nil {
+	if err != nil || !oinf.Mode().IsRegular() {
 		return false
 	}
 
@@ -152,8 +152,8 @@ func isYounger(ofn string, ifn string) bool {
 		if e != nil {
 			return e
 		}
-		if iinf.ModTime().After(oinf.ModTime()) {
-			err := errors.New("this is older")
+		if !oinf.ModTime().After(iinf.ModTime()) {
+			err := errors.New("this is younger")
 			return err
 		}
 		return nil
