@@ -6,10 +6,10 @@ const usage = `
 Usage is: %[1]s [flags] <file-or-dir> 
 
 Command "%[1]s" allows, moderately sized, abitrary data files to be
-embedded (bundled) inside a Go binary. It creates (writes) a Go source
-file containing variable initializations with data from the files you
-wish to embed in base64 encoding. The generated file can be compiled
-and linked with the rest of your program's code.
+embedded (bundled) inside a Go binary. It generates a Go source file
+containing variable initializations with data from the files you wish
+to embed in base64 encoding. The generated file can be compiled and
+linked with the rest of your program's code.
 
 The <file-or-dir> argument is the name (path) of the file you wish to
 embed. If a directory name is given instead, all files in that
