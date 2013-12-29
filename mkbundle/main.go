@@ -170,11 +170,19 @@ func main() {
 	var err error
 
 	flag.Parse()
-	if len(flag.Args()) != 1 {
-		flag.Usage()
+	if fl.help {
+		flag.CommandLine.SetOutput(os.Stdout)
+		fmt.Printf(usage, path.Base(os.Args[0]),
+			BundleImportPath)
+		flag.PrintDefaults()
+		fmt.Println()
 		return
 	}
-
+	if flag.NArg() != 1 {
+		log.Printf("incorrect number of arguments.")
+		flag.Usage()
+		os.Exit(1)
+	}
 	if !fl.always && isYounger(fl.out, flag.Arg(0)) {
 		if fl.verbose {
 			log.Printf("%s is younger than %s",
@@ -188,11 +196,20 @@ func main() {
 			log.Fatal(err)
 		}
 		defer fo.Close()
+		if fl.verbose {
+			log.Printf("Generating %s", fl.out)
+		}
 	} else {
 		fo = os.Stdout
+		if fl.verbose {
+			log.Print("Generating on <stdout>")
+		}
 	}
 	err = emitBundle(fo, flag.Arg(0))
 	if err != nil {
+		if fl.out != "" {
+			os.Remove(fl.out)
+		}
 		log.Fatal(err)
 	}
 }
@@ -219,9 +236,11 @@ var fl struct {
 	skip    patlist
 	always  bool
 	verbose bool
+	help    bool
 }
 
 func init() {
+	flag.Var(&fl.skip, "skip", "Files/dirs to skip (glob pattern)")
 	flag.StringVar(&fl.out, "out", "",
 		"Output file (if empty, use <stdout>)")
 	flag.StringVar(&fl.out, "o", "",
@@ -232,21 +251,25 @@ func init() {
 		"Name of global that keeps embedded data")
 	flag.StringVar(&fl.index, "index", "_bundleIdx",
 		"Name of global filename-to-data index")
+	flag.BoolVar(&fl.gzip, "g", false,
+		"Short for '-gzip'")
 	flag.BoolVar(&fl.gzip, "gzip", false,
 		"Compress data before embedding")
 	flag.BoolVar(&fl.always, "always", false,
-		"Regenerate even if younger than input")
+		"Regenerate output even if younger than input")
 	flag.BoolVar(&fl.always, "a", false,
 		"Short for \"-always\"")
 	flag.BoolVar(&fl.verbose, "verbose", false,
-		"Print files included in the bundle")
+		"Print actions performed on <stderr>")
 	flag.BoolVar(&fl.verbose, "v", false,
 		"Short for \"-verbose\"")
-	flag.Var(&fl.skip, "skip", "Files/dirs to skip (glob pattern)")
+	flag.BoolVar(&fl.help, "help", false,
+		"Show instructions")
+	flag.BoolVar(&fl.help, "h", false,
+		"Short for \"-help\"")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, usage, path.Base(os.Args[0]))
-		flag.PrintDefaults()
-		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr,
+			"run with '-help' for instructions")
 	}
 	log.SetFlags(0)
 	log.SetOutput(os.Stderr)
