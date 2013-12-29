@@ -1,6 +1,9 @@
+// mkbundle main
+
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -133,6 +136,35 @@ func emitBundle(w io.Writer, fpath string) error {
 	return nil
 }
 
+func isYounger(ofn string, ifn string) bool {
+	var oinf os.FileInfo
+	var err error
+
+	if ofn == "" {
+		return false
+	}
+	oinf, err = os.Stat(ofn)
+	if err != nil {
+		return false
+	}
+
+	var wf = func(p string, iinf os.FileInfo, e error) error {
+		if e != nil {
+			return e
+		}
+		if iinf.ModTime().After(oinf.ModTime()) {
+			err := errors.New("this is older")
+			return err
+		}
+		return nil
+	}
+	err = filepath.Walk(ifn, wf)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func main() {
 	var fo *os.File
 	var err error
@@ -143,6 +175,13 @@ func main() {
 		return
 	}
 
+	if !fl.always && isYounger(fl.out, flag.Arg(0)) {
+		if fl.verbose {
+			log.Printf("%s is younger than %s",
+				fl.out, flag.Arg(0))
+		}
+		return
+	}
 	if fl.out != "" {
 		fo, err = os.Create(fl.out)
 		if err != nil {
@@ -178,6 +217,7 @@ var fl struct {
 	index   string
 	gzip    bool
 	skip    patlist
+	always  bool
 	verbose bool
 }
 
@@ -194,6 +234,10 @@ func init() {
 		"Name of global filename-to-data index")
 	flag.BoolVar(&fl.gzip, "gzip", false,
 		"Compress data before embedding")
+	flag.BoolVar(&fl.always, "always", false,
+		"Regenerate even if younger than input")
+	flag.BoolVar(&fl.always, "a", false,
+		"Short for \"-always\"")
 	flag.BoolVar(&fl.verbose, "verbose", false,
 		"Print files included in the bundle")
 	flag.BoolVar(&fl.verbose, "v", false,
