@@ -172,14 +172,14 @@ func main() {
 	flag.Parse()
 	if fl.help {
 		flag.CommandLine.SetOutput(os.Stdout)
-		fmt.Printf(usage, path.Base(os.Args[0]),
-			BundleImportPath)
+		fmt.Printf(usage, path.Base(os.Args[0]))
 		flag.PrintDefaults()
 		fmt.Println()
 		return
 	}
 	if flag.NArg() != 1 {
-		log.Printf("incorrect number of arguments.")
+		fmt.Fprintf(os.Stderr,
+			"incorrect number of arguments.\n")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -268,9 +268,9 @@ func init() {
 	flag.BoolVar(&fl.help, "h", false,
 		"Short for \"-help\"")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr,
-			"run with '-help' for instructions")
+		log.Printf("run with '-help' for instructions")
 	}
 	log.SetFlags(0)
+	log.SetPrefix(path.Base(os.Args[0]) + ": ")
 	log.SetOutput(os.Stderr)
 }
