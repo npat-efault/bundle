@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+// Falgs for Index.Open and Decode
+const (
+	NODC int = 1 << iota // Do not decompress data
+)
+
 // The Entry type is used to represent the bundled file data. One such
 // structure is used for every bundled file. All structures are kept
 // in a global slice. When files are included in a bundle the terms
@@ -34,7 +39,7 @@ type Entry struct {
 type Index map[string]*Entry
 
 // MkIndex creates and initializes the names-to-entries index. A call
-// to MkIndex is inserted automatically by "mkindex" to the "init"
+// to MkIndex is inserted automatically by "mkbundle" to the "init"
 // function of the generated file.
 func MkIndex(bundle []Entry) Index {
 	var bsz int
@@ -66,19 +71,37 @@ func (idx Index) Entry(name string) *Entry {
 	return e
 }
 
-// TODO(npat): Change Index.Dir() to return []*Entry not []string
+// Dir is a slice of pointers to entries. It implements sort.Interface
+type Dir []*Entry
 
-// The Dir method returns a slice containing all entry names that
-// match the given prefix (all entry names that start with string
-// "prefix")
-func (idx Index) Dir(prefix string) []string {
-	var dir []string
+// Len returns length of Dir (number of elements)
+func (d Dir) Len() int {
+	return len(d)
+}
+
+// Less returns d[i].Name < d[j].Name
+func (d Dir) Less(i, j int) bool {
+	return d[i].Name < d[j].Name
+}
+
+// Swap swaps entries i and j in Dir
+func (d Dir) Swap(i, j int) {
+	t := d[i]
+	d[i] = d[j]
+	d[j] = t
+}
+
+// The Dir method returns a Dir (slice of Entry pointers) of all the
+// entries whose names match the given prefix (all entries whose names
+// start with string "prefix")
+func (idx Index) Dir(prefix string) []*Entry {
+	var dir Dir
 	for _, e := range idx {
 		if strings.HasPrefix(e.Name, prefix) {
-			dir = append(dir, e.Name)
+			dir = append(dir, e)
 		}
 	}
-	sort.Strings(dir)
+	sort.Sort(dir)
 	return dir
 }
 
@@ -88,9 +111,12 @@ func (idx Index) Dir(prefix string) []string {
 // Decode returns the decoded data for the bundle entry pointed to by
 // "e". Returns a slice of bytes with the decoded, decompressed (if
 // required), ready to use entry data, and an error indication which
-// is not-nil if the data cannot be decoded. In most cases it is
-// preferable to use the Reader interface instead of calling Decode.
-func Decode(e *Entry) ([]byte, error) {
+// is not-nil if the data cannot be decoded. If argument "flag" is
+// NODC, and the entry data are compressed (Entry.Gzip == true),
+// Decode will not decompress the data it returns (it will only decode
+// them). In most cases it is preferable to use the Reader interface
+// instead of calling Decode.
+func Decode(e *Entry, flag int) ([]byte, error) {
 	var rs *strings.Reader
 	var r64 io.Reader
 	var rz *gzip.Reader
@@ -99,15 +125,17 @@ func Decode(e *Entry) ([]byte, error) {
 
 	rs = strings.NewReader(e.Data)
 	r64 = base64.NewDecoder(base64.StdEncoding, rs)
-	if e.Gzip {
+	if e.Gzip && (flag&NODC == 0) {
 		rz, err = gzip.NewReader(r64)
 		if err != nil {
 			return nil, err
 		}
 		defer rz.Close()
+	} else {
+		rz = nil
 	}
 	buf = new(bytes.Buffer)
-	if e.Gzip {
+	if rz != nil {
 		_, err = io.Copy(buf, rz)
 	} else {
 		_, err = io.Copy(buf, r64)
@@ -131,8 +159,11 @@ type Reader struct {
 
 // Open intializes and returns a Reader that reads from the bundle
 // entry specified by "name". It returns an error if no such entry
-// exists, or if the reader cannot be initialized.
-func (idx Index) Open(name string) (*Reader, error) {
+// exists, or if the reader cannot be initialized. If argument "flag"
+// is NODC, and the entry data are compressed (Entry.Gzip == true),
+// the reader will not decompress the data read from it (it will only
+// decode them).
+func (idx Index) Open(name string, flag int) (*Reader, error) {
 	var entry *Entry
 	var br *Reader
 	var err error
@@ -145,7 +176,7 @@ func (idx Index) Open(name string) (*Reader, error) {
 	br = &Reader{}
 	br.rs = strings.NewReader(entry.Data)
 	br.r64 = base64.NewDecoder(base64.StdEncoding, br.rs)
-	if entry.Gzip {
+	if entry.Gzip && (flag&NODC == 0) {
 		br.rz, err = gzip.NewReader(br.r64)
 		if err != nil {
 			return nil, err
