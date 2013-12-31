@@ -66,6 +66,8 @@ func (idx Index) Entry(name string) *Entry {
 	return e
 }
 
+// TODO(npat): Change Index.Dir() to return []*Entry not []string
+
 // The Dir method returns a slice containing all entry names that
 // match the given prefix (all entry names that start with string
 // "prefix")
@@ -79,6 +81,9 @@ func (idx Index) Dir(prefix string) []string {
 	sort.Strings(dir)
 	return dir
 }
+
+// TODO(npat): Change Decode() to allow return of compressed data
+// (optionally)
 
 // Decode returns the decoded data for the bundle entry pointed to by
 // "e". Returns a slice of bytes with the decoded, decompressed (if
@@ -112,6 +117,9 @@ func Decode(e *Entry) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+
+// TODO(npat): Change NewReader to allow return of compressed data
+// (optionally)
 
 // A Reader implents the io.Reader and io.Closer interface by reading,
 // decoding, and decompressing (if required) data from a bundle entry.
