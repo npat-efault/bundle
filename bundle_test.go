@@ -105,8 +105,8 @@ func TestData(t *testing.T) {
 		if e == nil {
 			t.Fatalf("Entry not found: %s", entries[i])
 		}
-		// Get data from bundle using Decode
-		data, err = bundle.Decode(e, 0)
+		// Get data from entry using Decode
+		data, err = e.Decode(0)
 		if err != nil {
 			t.Fatalf("bundle.Decode(): %s", err)
 		}
@@ -121,9 +121,9 @@ func TestData(t *testing.T) {
 			t.Fatalf("Bad data for: %s", entries[i])
 		}
 		// Get data from bundle using bundle.Reader
-		br, err = _bundleIdx.Open(entries[i], 0)
+		br, err = e.Open(0)
 		if err != nil {
-			t.Fatalf("idx.Open(): %s", err)
+			t.Fatalf("e.Open(): %s", err)
 		}
 		rdata, err = ioutil.ReadAll(br)
 		if err != nil {
@@ -169,7 +169,7 @@ func TestCompressed(t *testing.T) {
 			t.Fatalf("Not found: %s", entries[i])
 		}
 		// Get data from bundle using Decode
-		data, err = bundle.Decode(e, bundle.NODC)
+		data, err = e.Decode(bundle.NODC)
 		if err != nil {
 			t.Fatalf("bundle.Decode(): %s", err)
 		}
@@ -196,9 +196,9 @@ func TestCompressed(t *testing.T) {
 			t.Fatalf("Bad ddata for: %s", entries[i])
 		}
 		// Get data from bundle using bundle.Reader
-		br, err = _bundleIdx.Open(entries[i], bundle.NODC)
+		br, err = e.Open(bundle.NODC)
 		if err != nil {
-			t.Fatalf("bundle.Open(): %s", err)
+			t.Fatalf("e.Open(): %s", err)
 		}
 		gr, err = gzip.NewReader(br)
 		if err != nil {

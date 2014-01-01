@@ -3,9 +3,12 @@ bundle
 
 Bundle arbitrary data files in a Go binary.
 
-Package bundle, together with the "mkbundle" command, allow, moderately
-sized, arbitrary data files to be embedded (bundled) inside a Go
-binary.
+Package "bundle", together with the "mkbundle" command, allow,
+moderately sized, arbitrary data files to be embedded (bundled) inside
+a Go binary. It can be used to create self-contained applications
+removing the need to ship data-files together with your binaries. Data
+embedded (bundled) in the binary can be accessed using a file-like
+interface (Open, Read, etc).
 
 The mkbundle command generates a Go source file that contains global
 variables initialized with data from the files you wish to embed,
@@ -58,9 +61,15 @@ be generated and it will contain the following Go code:
 ```
 
 This generated file can be linked to your programm allowing access to
-the embedded data. The bundle module (github.com/npat-efault/bundle)
+the embedded data. The bundle package (github.com/npat-efault/bundle)
 contains functions that help you access the data that have been
-embedded in the binary by "mkbundle".
+embedded in the binary by "mkbundle". 
+
+## Documentation
+
+For more information see the documentation (godoc) of the "bundle"
+package and the "mkbundle" command. You can also read the source of
+the example "serveb" program.
 
 ## Install
 
@@ -72,7 +81,7 @@ Say:
   $ ./all.sh install
 ```
 
-Test with
+Test with:
 
 ```
   $ ./all.sh test [-v]
@@ -84,7 +93,7 @@ server that serves bundle data over HTTP. To build and run say:
 ```
   $ cd serveb
   $ ./all.sh build
-  $ ./serveb 6060
+  $ ./serveb :8080
 ```
 
-Then direct your browser to http://localhost:6060/
+Then direct your browser to http://localhost:8080/

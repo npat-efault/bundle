@@ -6,13 +6,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"sort"
 	"strings"
 )
 
-// Falgs for Index.Open and Decode
+// Falgs for *Entry.Open and *Entry.Decode
 const (
 	NODC int = 1 << iota // Do not decompress data
 )
@@ -74,14 +73,9 @@ func (idx Index) Entry(name string) *Entry {
 // Dir is a slice of pointers to entries. It implements sort.Interface
 type Dir []*Entry
 
-// Len returns length of Dir (number of elements)
+// Len returns the length of Dir (number of elements)
 func (d Dir) Len() int {
 	return len(d)
-}
-
-// Less returns d[i].Name < d[j].Name
-func (d Dir) Less(i, j int) bool {
-	return d[i].Name < d[j].Name
 }
 
 // Swap swaps entries i and j in Dir
@@ -89,6 +83,11 @@ func (d Dir) Swap(i, j int) {
 	t := d[i]
 	d[i] = d[j]
 	d[j] = t
+}
+
+// Less returns d[i].Name < d[j].Name
+func (d Dir) Less(i, j int) bool {
+	return d[i].Name < d[j].Name
 }
 
 // The Dir method returns a Dir (slice of Entry pointers) of all the
@@ -105,18 +104,15 @@ func (idx Index) Dir(prefix string) []*Entry {
 	return dir
 }
 
-// TODO(npat): Change Decode() to allow return of compressed data
-// (optionally)
-
-// Decode returns the decoded data for the bundle entry pointed to by
-// "e". Returns a slice of bytes with the decoded, decompressed (if
-// required), ready to use entry data, and an error indication which
-// is not-nil if the data cannot be decoded. If argument "flag" is
-// NODC, and the entry data are compressed (Entry.Gzip == true),
-// Decode will not decompress the data it returns (it will only decode
-// them). In most cases it is preferable to use the Reader interface
-// instead of calling Decode.
-func Decode(e *Entry, flag int) ([]byte, error) {
+// Decode returns the decoded data for the bundle entry. Returns a
+// slice of bytes with the decoded, decompressed (if required), ready
+// to use entry data, and an error indication which is not-nil if the
+// data cannot be decoded. If argument "flag" is NODC, and the entry
+// data are compressed (Entry.Gzip == true), Decode will not
+// decompress the data it returns (it will only decode them). In most
+// cases it is preferable to use the Reader interface instead of
+// calling Decode.
+func (e *Entry) Decode(flag int) ([]byte, error) {
 	var rs *strings.Reader
 	var r64 io.Reader
 	var rz *gzip.Reader
@@ -146,9 +142,6 @@ func Decode(e *Entry, flag int) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// TODO(npat): Change NewReader to allow return of compressed data
-// (optionally)
-
 // A Reader implents the io.Reader and io.Closer interface by reading,
 // decoding, and decompressing (if required) data from a bundle entry.
 type Reader struct {
@@ -158,25 +151,18 @@ type Reader struct {
 }
 
 // Open intializes and returns a Reader that reads from the bundle
-// entry specified by "name". It returns an error if no such entry
-// exists, or if the reader cannot be initialized. If argument "flag"
-// is NODC, and the entry data are compressed (Entry.Gzip == true),
-// the reader will not decompress the data read from it (it will only
-// decode them).
-func (idx Index) Open(name string, flag int) (*Reader, error) {
-	var entry *Entry
+// entry. It returns an error if the reader cannot be initialized. If
+// argument "flag" is NODC, and the entry data are compressed
+// (Entry.Gzip == true), the reader will not decompress the data read
+// from it (it will only decode them).
+func (e *Entry) Open(flag int) (*Reader, error) {
 	var br *Reader
 	var err error
 
-	if !idx.Has(name) {
-		err = fmt.Errorf("no such entry: %s", name)
-		return nil, err
-	}
-	entry = idx.Entry(name)
 	br = &Reader{}
-	br.rs = strings.NewReader(entry.Data)
+	br.rs = strings.NewReader(e.Data)
 	br.r64 = base64.NewDecoder(base64.StdEncoding, br.rs)
-	if entry.Gzip && (flag&NODC == 0) {
+	if e.Gzip && (flag&NODC == 0) {
 		br.rz, err = gzip.NewReader(br.r64)
 		if err != nil {
 			return nil, err

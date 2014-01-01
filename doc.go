@@ -68,14 +68,15 @@ file "tstbundle.go" :
 
   func main() {
       for _, e := range _bundleIdx.Dir("") {
-          b := bundle.Decode(e, 0)
+          b := e.Decode(0)
           fmt.Println(e.Name, e.Size, string(b))
       }
   }
 
-The Dir() method, defined on _bundleIdx, returns a slice of pointers
-to the entries in the index with names matching the given prefix (all
-entries for an empty prefix) sorted by name in ascending order.
+The Dir() method, defined on _bundleIdx, returns a slice of
+pointers to the entries in the index with names matching the given
+prefix (all entries for an empty prefix) sorted by name in ascending
+order.
 
 The code above, compiled and linked together with the generated file
 "mybundle.go", when run produces the output:
