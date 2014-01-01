@@ -1,6 +1,6 @@
 /*
 
-Package bundle helps access data embedded in a Go binary using
+Package bundle: Access data that have been embedded in a Go binary by
 mkbundle.
 
 Package bundle, together with the "mkbundle" command, allow, moderately
@@ -15,12 +15,12 @@ variables initialized with data from the files you wish to embed,
   $ echo "Test file 1 contents" > mydata/file1.txt
   $ echo "Test file 2 contents" > mydata/file2.txt
   $ mkbundle -v -o=mybundle.go mydata
-  Generating mybundle.go
-  + file1.txt
-  + file2.txt
+  mkbundle: Generating mybundle.go
+  mkbundle: + file1.txt
+  mkbundle: + file2.txt
 
-After running the command above, the file "mybundle.go" will be
-generated and it will contain the following Go code:
+As a result of running the command above, the file "mybundle.go" will
+be generated and it will contain the following Go code:
 
   // Bundle file
   // Auto-generated. !! DO NOT EDIT !!
@@ -55,7 +55,7 @@ generated and it will contain the following Go code:
 
 As you can see, a global variable named "_bundle" is defined which is
 a slice with one entry for each of the files included in the
-bundle. Every entry keeps the file's name, it's size (the original
+bundle. Each entry keeps the file's name, it's size (the original
 size, before compression and encoding), an indication whether the file
 was compressed, and the file's data in base64 encoding. In addition a
 global map, named "_bundleIdx" is defined which associates file-names
@@ -67,16 +67,15 @@ file "tstbundle.go" :
   import "fmt"
 
   func main() {
-      for _, n := range _bundleIdx.Dir("") {
-          e, _ := _bundleIdx.Entry(n)
-          b := bundle.Decode(e)
+      for _, e := range _bundleIdx.Dir("") {
+          b := bundle.Decode(e, 0)
           fmt.Println(e.Name, e.Size, string(b))
       }
   }
 
-The Dir() method defined on _bundleIdx returns a list of the names in
-the index matching the given prefix (all names for an empty prefix)
-sorted in ascending order.
+The Dir() method, defined on _bundleIdx, returns a slice of pointers
+to the entries in the index with names matching the given prefix (all
+entries for an empty prefix) sorted by name in ascending order.
 
 The code above, compiled and linked together with the generated file
 "mybundle.go", when run produces the output:
@@ -85,26 +84,18 @@ The code above, compiled and linked together with the generated file
   file1.txt 21 Test file 1 contents
   file2.txt 21 Test file 2 contents
 
-In the directory "mkbundle/example" you can find a (trivial)
-shell-script (build.sh) that automates the process of generating the
-bundle file and linking it with your code to produce the binary.
-
 The name of the global variable keeping the embedded data ("_bundle"
 in our example), the name of the global name-to-entry index
 ("_bundleIdx"), the name of the package for the generated bundle
 ("main"), whether to compress the files or not, and several other
 options can be controlled by flags passed to the "mkbundle"
-command. Say:
-
-  mkbundle -help
-
-for instructions.
+command. See the command's documentation for more information.
 
 Summarizing: The command "mkbundle" allows arbitrary data files to be
 embedded in Go binaries by converting the files to statements
-initializing global variables. The module
-"github.com/npat-efault/bundle" provides an interface that can be used
-to access the data embedded in the binary.
+initializing global variables. This module
+("github.com/npat-efault/bundle") provides an interface that can be
+used to access the data embedded in the binary.
 
 */
 package bundle
